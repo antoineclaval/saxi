@@ -390,6 +390,12 @@ function PaperConfig({state}: {state: State}) {
   </div>;
 }
 
+function SwapCanvas({driver}: {driver: Driver}) {
+  return <div>
+    <button onClick={() => driver.limp()}>Swap Canvas</button>
+  </div>;
+}
+
 function MotorControl({driver}: {driver: Driver}) {
   return <div>
     <button onClick={() => driver.limp()}>disengage motors</button>
@@ -504,7 +510,7 @@ function PlanPreview(
       strokeDasharray="1,1"
     />
   </g>;
-  return <div className="preview">
+  const preview = <div className="preview">
     <svg
       width={width}
       height={height}
@@ -515,6 +521,7 @@ function PlanPreview(
     </svg>
     {progressIndicator}
   </div>;
+  return preview;
 }
 
 function LayerSelector({state}: {state: State}) {
@@ -785,6 +792,16 @@ function Root({driver}: {driver: Driver}) {
     driver.onplan = (plan: Plan) => {
       setPlan(plan);
     };
+    const onswap = (e: DragEvent) => {
+      e.preventDefault();
+      const item = document.querySelector("#app > div > div.preview-area > div > svg") ;
+      if ( item ){
+        dispatch(setPaths(readSvg(item.outerHTML as string)));
+        document.body.classList.remove("dragover");
+      }else{
+        console.error("svg item is null");
+      }
+    };
     const ondrop = (e: DragEvent) => {
       e.preventDefault();
       const item = e.dataTransfer.items[0];
@@ -804,12 +821,15 @@ function Root({driver}: {driver: Driver}) {
       e.preventDefault();
       document.body.classList.remove("dragover");
     };
+    // OnDRop concurent?
     const onpaste = (e: ClipboardEvent) => {
       e.clipboardData.items[0].getAsString((s) => {
         dispatch(setPaths(readSvg(s)));
       });
     };
     document.body.addEventListener("drop", ondrop);
+    document.body.addEventListener("swap", onswap);
+
     document.body.addEventListener("dragover", ondragover);
     document.body.addEventListener("dragleave", ondragleave);
     document.addEventListener("paste", onpaste);
@@ -827,7 +847,7 @@ function Root({driver}: {driver: Driver}) {
     <div className={`root ${state.connected ? "connected" : "disconnected"}`}>
       <div className="control-panel">
         <div className={`saxi-title red`} title={state.deviceInfo ? state.deviceInfo.path : null}>
-          <span className="red reg">s</span><span className="teal">axi</span>
+          <span className="red reg">s</span><span className="teal">axi</span><span className="pink">+</span>
         </div>
         {!state.connected ? <div className="info-disconnected">disconnected</div> : null}
         <div className="section-header">pen</div>
@@ -840,6 +860,10 @@ function Root({driver}: {driver: Driver}) {
         <div className="section-body">
           <PaperConfig state={state} />
           <LayerSelector state={state} />
+        </div>
+        <div className="section-header">WebCanvas</div>
+        <div className="section-body">
+          <SwapCanvas driver={driver} />
         </div>
         <details>
           <summary className="section-header">more</summary>
@@ -862,7 +886,8 @@ function Root({driver}: {driver: Driver}) {
           previewSize={{width: Math.max(0, previewSize.width - 40), height: Math.max(0, previewSize.height - 40)}}
           plan={plan}
         />
-        {plan ? null : <DragTarget/>}
+        {/* {plan ? null : <DragTarget/>} */}
+        <canvas></canvas>
       </div>
     </div>
   </DispatchContext.Provider>;

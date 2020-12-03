@@ -72,6 +72,13 @@ path {
   left: 0;
 }
 
+canvas {
+  background-color: lightgrey;
+  box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  height: 50%;
+}
+
 .dragover .drag-target {
   opacity: 0;
 }
